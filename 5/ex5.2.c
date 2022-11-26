@@ -1,6 +1,4 @@
-#define EXAMPLE
-
-#include "example1.c"
+#include "functions"
 
 int main() {
     twi_init();
