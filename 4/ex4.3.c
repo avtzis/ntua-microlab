@@ -63,6 +63,10 @@ void lcd_init() {
     PORTD = 0x30;
     send_pulse();
     _delay_ms(1);
+    
+    PORTD = 0x30;
+    send_pulse();
+    _delay_ms(1);
 
     PORTD = 0x20;
     send_pulse();
@@ -78,7 +82,7 @@ void lcd_init() {
 }
 
 void adc_init() {
-    ADMUX = 0b01000000;
+    ADMUX = 0b01000001;
     ADCSRA = 0b10000111;
 }
 
@@ -103,20 +107,19 @@ void enable_PWM() {
 void lcd_display_double(char *display1, char *display2) {
     lcd_command(DISPLAY_CLEAR);
     lcd_display(display1);
-
     lcd_command(DISPLAY_SWITCH_TO_LINE_2);
     lcd_display(display2);
 }
 
-void convert_and_display() {
-    unsigned short adc;
-    unsigned short vin, vout;
+void convert_and_display(int factor) {
+    unsigned int adc;
+    unsigned int vin, vout;
     char display1[17], display2[16];
 
     adc = adc_convert();
 
     vin = ((((adc * VREF * 10) >> 5) * 10) >> 5);
-    vout = OCR1A * vin;
+    vout = factor * vin / 5;
 
     sprintf(display1, " %d", OCR1A);
     sprintf(display2, "%d.%02d", vout/100, vout%100);
@@ -137,19 +140,19 @@ int main() {
 
         while(!(PINB & 4)) {
             OCR1A = DC_20;
-            convert_and_display();
+            convert_and_display(1);
         }
         while(!(PINB & 8)) {
             OCR1A = DC_20 * 2;
-            convert_and_display();
+            convert_and_display(2);
         }
         while(!(PINB & 16)) {
             OCR1A = DC_20 * 3;
-            convert_and_display();
+            convert_and_display(3);
         }
         while(!(PINB & 32)) {
             OCR1A = DC_20 * 4;
-            convert_and_display();
+            convert_and_display(4);
         }
     }
 }
