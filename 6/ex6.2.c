@@ -346,6 +346,7 @@ int main() {
                 _delay_ms(500);
             }
             OCR1AL = 255;
+            clear_display();
         }
     }
 }
