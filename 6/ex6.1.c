@@ -270,7 +270,7 @@ char scan_row(int row) {
 
 char scan_keypad() {
     char ret = 0;
-    for(int i=0; ret || i<4; ++i) ret = scan_row(i);
+    for(int i=1; ret || i<=4; ++i) ret = scan_row(i);
     return ret;
 }
 
