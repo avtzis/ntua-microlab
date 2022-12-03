@@ -1,8 +1,9 @@
 #define F_CPU 16000000UL
 
-#include<avr/io.h>
-#include<avr/interrupt.h>
-#include<util/delay.h>
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <util/delay.h>
+#include <string.h>
 
 #define PCA9555_0_ADDRESS 0x40 //A0=A1=A2=0 by hardware
 #define TWI_READ 1 // reading from twi device
@@ -298,7 +299,7 @@ char keypad_to_ascii() {
 }
 
 void DC_init() {
-    TCCR1A = (1 << WGM10) | (1 << COM1A1);
+    TCCR1A = (1 << WGM10) | (1 << COM1A1); //?
     TCCR1B = (1 << WGM12) | (1 << CS11);
     OCR1AL = 255;
 }
