@@ -4,6 +4,7 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <string.h>
+#include <stdio.h>
 
 #define PCA9555_0_ADDRESS 0x40 //A0=A1=A2=0 by hardware
 #define TWI_READ 1 // reading from twi device
@@ -220,19 +221,15 @@ void lcd_command(char command) {
     _delay_ms(1);
 }
 
-void lcd_display(char *display) { 
-    int length; 
-    
-    //lcd_command(DISPLAY_CLEAR);
-    
-    if((length = strlen(display)) > 16) length = 16;
-
+void lcd_display(const char* display, int length) { 
     for(int i=0; i<length; ++i) {
         lcd_data(display[i]);
     }
 }
 
 void lcd_init() {
+    DDRD = 0xFF;
+            
     _delay_ms(50);
 
     PORTD = 0x30;
@@ -258,23 +255,20 @@ void lcd_init() {
 
     lcd_command(0x06);
     _delay_ms(2);
-
-    lcd_data(' ');
-    _delay_ms(1);
 }
 
 char scan_row(int row) {
-    int n;
-    for(int i=1, n=1; i<row; ++i) n << 1;
+    int n = 1;
+    for(int i=1; i<row; ++i) (n <<= 1);
     PCA9555_0_write(REG_OUTPUT_1, n ^ 0xFF);
 
-    char input = (PCA9555_0_read(REG_INPUT_1) ^ 0xFF & 0x0F);
-    return n | input;
+    char input = ((PCA9555_0_read(REG_INPUT_1) ^ 0xFF) & 0xF0);
+    return input ? n | input : 0;
 }
 
 char scan_keypad() {
     char ret = 0;
-    for(int i=1; ret || i<=4; ++i) ret = scan_row(i);
+    for(int i=1; !ret && i<=4; ++i) ret = scan_row(i);
     return ret;
 }
 
@@ -288,12 +282,13 @@ char scan_keypad_rising_edge() {
 
 char keypad_to_ascii() {
     char pressed_button = scan_keypad_rising_edge();
-    char high_byte = (pressed_button & 0xF0 >> 4);
+    char high_byte = ((pressed_button & 0xF0) >> 4);
     char low_byte = pressed_button & 0x0F;
+    
     int high, low;
 
-    for(high = 0; high_byte != 1 && high < 4; ++high) high_byte >> 1;
-    for(low = 0; low_byte != 1 && low < 4; ++low) low_byte >> 1;
+    for(high = 0; high_byte != 1 && high < 4; ++high) high_byte >>= 1;
+    for(low = 0; low_byte != 1 && low < 4; ++low) low_byte >>= 1;
 
     return high>3 || low>3 ? 0 : keypad_table[low][high];
 }
@@ -316,30 +311,34 @@ int main() {
     DDRB = 0xFF;
     PORTB = 0;
     PCA9555_0_write(REG_CONFIGURATION_1, 0xF0);
+    clear_display();
 
     while(1) {
-        char display_char1 = keypad_to_ascii();
-        if(display_char1) lcd_display(&display_char1);
+        char display_char1;
+        display_char1 = keypad_to_ascii();
+        if(display_char1);// lcd_display(&display_char1, 1);
         else continue;
         
         char display_char2;
         while(display_char1 == (display_char2 = keypad_to_ascii()));
         while(!display_char2) display_char2 = keypad_to_ascii();
-        lcd_display(&display_char2);
+        //lcd_display(&display_char2, 1);
 
         _delay_ms(100);
+        //clear_display();
         
         char password[2] = {display_char1, display_char2};
-        if(password == "19") {
+        lcd_display(password, 2);
+        if(!strcmp(password, "19")) {
             PORTB = 0xFF;
-            lcd_display("access granted");
+            lcd_display(" access granted", 16);
             _delay_ms(4000);
             PORTB = 0;
             _delay_ms(1000);
             clear_display();
         } else {
-            lcd_display("incorrect");
-            OCR1AL = 128;
+            lcd_display(" incorrect", 10);
+            OCR1AL = 12;
             for(int i=0; i<5; ++i) {
                 PORTB = 0xFF;
                 _delay_ms(500);
