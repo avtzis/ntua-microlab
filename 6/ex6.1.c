@@ -3,6 +3,8 @@
 #include<avr/io.h>
 #include<avr/interrupt.h>
 #include<util/delay.h>
+#include <string.h>
+#include <stdio.h>
 
 #define PCA9555_0_ADDRESS 0x40 //A0=A1=A2=0 by hardware
 #define TWI_READ 1 // reading from twi device
@@ -219,10 +221,11 @@ void lcd_command(char command) {
     _delay_ms(1);
 }
 
-void lcd_display(char *display) { 
+void lcd_display(const char* display) { 
     int length; 
     
     lcd_command(DISPLAY_CLEAR);
+    lcd_data(' ');
     
     if((length = strlen(display)) > 16) length = 16;
 
@@ -260,17 +263,17 @@ void lcd_init() {
 }
 
 char scan_row(int row) {
-    int n;
-    for(int i=1, n=1; i<row; ++i) n << 1;
+    int n = 1;
+    for(int i=1; i<row; ++i) (n <<= 1);
     PCA9555_0_write(REG_OUTPUT_1, n ^ 0xFF);
 
-    char input = (PCA9555_0_read(REG_INPUT_1) ^ 0xFF & 0x0F);
-    return n | input;
+    char input = ((PCA9555_0_read(REG_INPUT_1) ^ 0xFF) & 0xF0);
+    return input ? n | input : 0;
 }
 
 char scan_keypad() {
     char ret = 0;
-    for(int i=1; ret || i<=4; ++i) ret = scan_row(i);
+    for(int i=1; !ret && i<=4; ++i) ret = scan_row(i);
     return ret;
 }
 
@@ -284,18 +287,20 @@ char scan_keypad_rising_edge() {
 
 char keypad_to_ascii() {
     char pressed_button = scan_keypad_rising_edge();
-    char high_byte = (pressed_button & 0xF0 >> 4);
+    char high_byte = ((pressed_button & 0xF0) >> 4);
     char low_byte = pressed_button & 0x0F;
+    
     int high, low;
 
-    for(high = 0; high_byte != 1 && high < 4; ++high) high_byte >> 1;
-    for(low = 0; low_byte != 1 && low < 4; ++low) low_byte >> 1;
+    for(high = 0; high_byte != 1 && high < 4; ++high) high_byte >>= 1;
+    for(low = 0; low_byte != 1 && low < 4; ++low) low_byte >>= 1;
 
     return high>3 || low>3 ? 0 : keypad_table[low][high];
 }
 
 int main() {
     twi_init();
+    DDRD = 0xFF;
     lcd_init();
     PCA9555_0_write(REG_CONFIGURATION_1, 0xF0);
 
@@ -303,4 +308,5 @@ int main() {
         char display_char = keypad_to_ascii();
         if(display_char) lcd_display(&display_char);
     }
+
 }
