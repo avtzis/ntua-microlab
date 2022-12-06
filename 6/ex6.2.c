@@ -307,7 +307,6 @@ void clear_display() {
 int main() {
     twi_init();
     lcd_init();
-    DC_init();
     DDRB = 0xFF;
     PORTB = 0;
     PCA9555_0_write(REG_CONFIGURATION_1, 0xF0);
@@ -338,14 +337,12 @@ int main() {
             clear_display();
         } else {
             lcd_display(" incorrect", 10);
-            OCR1AL = 12;
-            for(int i=0; i<5; ++i) {
+            for(int i=0; i<10; ++i) {
                 PORTB = 0xFF;
-                _delay_ms(500);
+                _delay_ms(250);
                 PORTB = 0;
-                _delay_ms(500);
+                _delay_ms(250);
             }
-            OCR1AL = 255;
             clear_display();
         }
     }
