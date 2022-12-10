@@ -10,17 +10,17 @@
 #define ERR_NODEV 0x8000
 #define DISPLAY_CLEAR 0x01
 
-void clear_bit(char port, int bit) {
-    port &= (0xFE << bit);
+void clear_bit(char* port, int bit) {
+    *port &= (0xFE << bit);
 }
 
-void set_bit(char port, int bit) {
-    port |= (1 << bit);
+void set_bit(char* port, int bit) {
+    *port |= (1 << bit);
 }
 
 void send_pulse() {
-    set_bit(PORTD, PD3);
-    clear_bit(PORTD, PD3);
+    set_bit(&PORTD, PD3);
+    clear_bit(&PORTD, PD3);
 }
 
 void write_2_nibbles(char reg0) {
@@ -35,13 +35,13 @@ void write_2_nibbles(char reg0) {
 }
 
 void lcd_data(char data) {
-    set_bit(PORTD, PD2);
+    set_bit(&PORTD, PD2);
     write_2_nibbles(data);
     _delay_ms(1);
 }
 
 void lcd_command(char command) {
-    clear_bit(PORTD, PD3)
+    clear_bit(&PORTD, PD3)
     write_2_nibbles(command);
     _delay_ms(1);
 }
@@ -71,6 +71,10 @@ void lcd_init() {
     send_pulse();
     _delay_ms(1);
 
+    PORTD = 0x30;
+    send_pulse();
+    _delay_ms(1);
+
     PORTD = 0x20;
     send_pulse();
     _delay_ms(1);
@@ -85,26 +89,26 @@ void lcd_init() {
 }
 
 char one_wire_reset() {
-    set_bit(DDRD, PD4);
-    clear_bit(PORTD, PD4);
+    set_bit(&DDRD, PD4);
+    clear_bit(&PORTD, PD4);
     _delay_us(480);
 
-    clear_bit(DDRD, PD4);
-    clear_bit(PORTD, PD4);
+    clear_bit(&DDRD, PD4);
+    clear_bit(&PORTD, PD4);
     _delay_us(480);
     
-    return (PIND&0x10);
+    return PIND & 0x10;
 }
 
 char one_wire_receive_bit() {
     char ret;
 
-    set_bit(DDRD, PD4);
-    clear_bit(PORTD, PD4);
+    set_bit(&DDRD, PD4);
+    clear_bit(&PORTD, PD4);
     _delay_us(2);
 
-    clear_bit(DDRD, PD4);
-    clear_bit(PORTD, PD4);
+    clear_bit(&DDRD, PD4);
+    clear_bit(&PORTD, PD4);
     _delay_us(10);
 
     ret = PIND & 0x10;
@@ -114,15 +118,15 @@ char one_wire_receive_bit() {
 }
 
 void one_wire_transmit_bit(char bit) {
-    set_bit(DDRD, PD4);
-    clear_bit(PORTD, PD4);
+    set_bit(&DDRD, PD4);
+    clear_bit(&PORTD, PD4);
     _delay_us(2);
 
-    bit ? set_bit(PORTD, PD4) : clear_bit(PORTD, PD4);
+    bit ? set_bit(&PORTD, PD4) : clear_bit(&PORTD, PD4);
     _delay_us(58);
 
-    clear_bit(DDRD, PD4);
-    clear_bit(PORTD, PD4);
+    clear_bit(&DDRD, PD4);
+    clear_bit(&PORTD, PD4);
     _delay_us(1);
 }
 
@@ -130,11 +134,9 @@ char one_wire_receive_byte() {
     char res = 0;
 
     for (int i=0; i<8; i++) {
+        res <<= 1;
         if(one_wire_receive_bit())
             res |= 1;
-        if(i<7)
-            res <<= 1;
-
     }
     
     return res;
@@ -146,8 +148,9 @@ void one_wire_transmit_byte(char bit) {
 }
 
 
-int set_temperature(char* prama1){
+int get_temperature(char* prama1){
     char temp, sign;
+
     if(!one_wire_reset())
         return ERR_NODEV;
 
@@ -158,7 +161,7 @@ int set_temperature(char* prama1){
     if(!one_wire_reset())
         return ERR_NODEV;
 
-    one_wire_transmit_byte(0xcc);
+    one_wire_transmit_byte(0xCC);
     one_wire_transmit_byte(0xBE);
 
 
@@ -182,7 +185,7 @@ int main() {
     lcd_init();
 
     for(every_1sec) {    
-        if(!(set_temperature(temp))) {
+        if(!get_temperature(temp)) {
             lcd_display("NO Device");
         } else {
             lcd_display(temp);
