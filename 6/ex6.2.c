@@ -293,12 +293,6 @@ char keypad_to_ascii() {
     return high>3 || low>3 ? 0 : keypad_table[low][high];
 }
 
-void DC_init() {
-    TCCR1A = (1 << WGM10) | (1 << COM1A1); //?
-    TCCR1B = (1 << WGM12) | (1 << CS11);
-    OCR1AL = 255;
-}
-
 void clear_display() {
     lcd_command(DISPLAY_CLEAR);
     lcd_data(' ');
@@ -315,16 +309,14 @@ int main() {
     while(1) {
         char display_char1;
         display_char1 = keypad_to_ascii();
-        if(display_char1);// lcd_display(&display_char1, 1);
+        if(display_char1);
         else continue;
         
         char display_char2;
         while(display_char1 == (display_char2 = keypad_to_ascii()));
         while(!display_char2) display_char2 = keypad_to_ascii();
-        //lcd_display(&display_char2, 1);
 
         _delay_ms(100);
-        //clear_display();
         
         char password[2] = {display_char1, display_char2};
         lcd_display(password, 2);
