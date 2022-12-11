@@ -6,15 +6,15 @@
 #include <stdio.h>
 #include <string.h>
 
-#define every_1sec ;;_delay_ms(1000);
+#define every_1sec ;;_delay_ms(1000)
 #define ERR_NODEV 0x8000
 #define DISPLAY_CLEAR 0x01
 
-void clear_bit(char* port, int bit) {
+void clear_bit(volatile unsigned char* port, int bit) {
     *port &= (0xFE << bit);
 }
 
-void set_bit(char* port, int bit) {
+void set_bit(volatile unsigned char* port, int bit) {
     *port |= (1 << bit);
 }
 
@@ -24,11 +24,11 @@ void send_pulse() {
 }
 
 void write_2_nibbles(char reg0) {
-    char reg1 = reg0 & 0xf0, reg2 = PIND & 0x0f;
+    char reg1 = reg0 & 0xF0, reg2 = PIND & 0x0F;
     reg1 += reg2;
     PORTD = reg1;
     send_pulse();
-    reg1 = (reg0 & 0x0f) << 4;
+    reg1 = (reg0 & 0x0F) << 4;
     reg1 += reg2;
     PORTD = reg1;
     send_pulse();
@@ -41,7 +41,7 @@ void lcd_data(char data) {
 }
 
 void lcd_command(char command) {
-    clear_bit(&PORTD, PD3)
+    clear_bit(&PORTD, PD3);
     write_2_nibbles(command);
     _delay_ms(1);
 }
