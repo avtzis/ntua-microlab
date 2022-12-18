@@ -10,6 +10,7 @@
 #define ERR_NODEV 0x8000
 #define DISPLAY_CLEAR 0x01
 #define DEGREE_CIRCLE 0b10110010
+//#define DS18B20 1
 
 void clear_bit(volatile unsigned char* port, int bit) {
     *port &= (0xFE << bit);
@@ -90,8 +91,6 @@ void lcd_init() {
 }
 
 char one_wire_reset() {
-    volatile unsigned char temp;
-    
     set_bit(&DDRD, PD4);
     clear_bit(&PORTD, PD4);
     _delay_us(480);
@@ -100,7 +99,7 @@ char one_wire_reset() {
     clear_bit(&PORTD, PD4);
     _delay_us(100);
     
-    temp = PIND;
+    volatile unsigned char temp = PIND;
     _delay_us(380);
     
     return temp & 0x10;
@@ -177,19 +176,50 @@ int get_temperature(char* prama1){
     one_wire_transmit_byte(0xCC);
     one_wire_transmit_byte(0xBE);
 
-
+#ifndef DS18B20
     temp = one_wire_receive_byte();
     sign = one_wire_receive_byte();
 
     if(sign) {
         temp ^= 0xFF;
         temp++;
-        temp *= -1;
+        //temp *= -1;
+        char real_temp;
+        int idle = temp < 20;
+        int limit = temp < 65;
+        int point = idle && temp%2;
+        if(idle) real_temp = temp/2;
+        else if (limit) real_temp = temp - 10;
+        else real_temp = 55;
+        sprintf(prama1, "-%d.%01d%cC", real_temp, point? 5: 0, (char)223);
+    } else {
+        char real_temp;
+        int idle = temp < 170;
+        int limit = temp < 295;
+        int point = idle && temp%2;
+        if(idle) real_temp = temp/2;
+        else if (limit) real_temp = temp - 85;
+        else real_temp = 125;
+        sprintf(prama1, "%+d.%d%cC", real_temp, point? 5: 0, (char)223);
     }
-    int idle = temp>-20 && temp<170;
-    int point = idle && temp%2;
+    
+#else
+    int temp1 = one_wire_receive_byte();
+    int temp2 = one_wire_receive_byte() << 8;
+    (int)temp = ((temp1 | temp2) & 0x7FF) * 1000;
+    (int)sign = temp2 & 0xF800;
+    
+    if(sign) {
+        temp ^= 0x7FF;
+        temp++;
+        //temp *= -1;
+        sprintf(prama1, "-%d.%03d%cC", temp/16000, temp%16000, (char)223);
+    }
+    else sprintf(prama1, "%+d.%03d%cC", temp/16000, temp%16000, (char)223);
+#endif
 
-    sprintf(prama1, "%+d.%d%cC", idle? temp/2: temp, point? 5: 0, (char)223);
+
+    
     
 out:
     lcd_init();
@@ -199,8 +229,7 @@ out:
 int main() {
     for(every_1sec) {
         char temp[16];
-        int err = get_temperature(temp);
-        if(err) {
+        if(get_temperature(temp)) {
             lcd_display("NO Device");
         } else {
             lcd_display(temp);
