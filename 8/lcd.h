@@ -53,6 +53,7 @@ void lcd_init();
 void lcd_clear();
 void lcd_clear_line_1();
 void lcd_clear_line_2();
+void lcd_switch_line();
 void __lcd_display__(const char* display, int length);
 
 void lcd_display(const char* display);

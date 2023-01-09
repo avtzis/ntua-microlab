@@ -5,7 +5,7 @@ void cursor_increment(int steps) {
 }
 
 int cursor_overflow() {
-    return (__cursor_position__ > DISPLAY_LINE_1_END && __cursor_position__ < DISPLAY_LINE_1_START) || __cursor_position__ > DISPLAY_LINE_2_END;
+    return (__cursor_position__ > DISPLAY_LINE_1_END && __cursor_position__ < DISPLAY_LINE_2_START) || __cursor_position__ > DISPLAY_LINE_2_END;
 }
 
 void cursor_switch_line() {
@@ -42,7 +42,7 @@ void lcd_command(reg_t command) {
 }
 
 void lcd_init() {
-    DDRD=PORT_LCD_INIT;
+    DDRD = PORT_LCD_INIT;
     _delay_ms(50);
 
     PORTD = PORT_COMMAND_SET_LCD_8BIT;
@@ -96,6 +96,13 @@ void lcd_clear_line_2() {
     __cursor_position__ = DISPLAY_LINE_2_START;
 }
 
+void lcd_switch_line() {
+    if(__cursor_position__ > DISPLAY_LINE_1_END) 
+        lcd_command(DISPLAY_SWITCH_TO_LINE_2);
+    else 
+        lcd_command(DISPLAY_SWITCH_TO_LINE_1);
+}
+
 void __lcd_display__(const char* display, int length) {
     int i;
     if(display == NULL) return;
@@ -107,7 +114,8 @@ void __lcd_display__(const char* display, int length) {
 
     if(cursor_overflow()) {
         cursor_switch_line();
-        __lcd_display__(display + i, length - i)
+        lcd_switch_line();
+        __lcd_display__(display + i, length - i);
     }
 }
 
@@ -123,31 +131,31 @@ void lcd_clear_and_display(const char* display) {
 void lcd_display_line_1(const char* display) {
     int length;
     lcd_clear_line_1();
-    if(length = strlen(display) > 16) length = 16;
-    __lcd_display__(display, length);
+    if((length = strlen(display) > 16)) length = 16;
+    lcd_display(display);
 }
 
 void lcd_display_line_1_only(const char* display) {
     int length;
     lcd_clear_line_2();
     lcd_clear_line_1();
-    if(length = strlen(display) > 16) length = 16;
-    __lcd_display__(display, length);
+    if((length = strlen(display) > 16)) length = 16;
+    lcd_display(display);
 }
 
 void lcd_display_line_2(const char* display) {
     int length;
     lcd_clear_line_2();
-    if(length = strlen(display) > 16) length = 16;
-    __lcd_display__(display, length);
+    if((length = strlen(display) > 16)) length = 16;
+    lcd_display(display);
 }
 
 void lcd_display_line_2_only(const char* display) {
     int length;
     lcd_clear_line_1();
     lcd_clear_line_2();
-    if(length = strlen(display) > 16) length = 16;
-    __lcd_display__(display, length);
+    if((length = strlen(display) > 16)) length = 16;
+    lcd_display(display);
 }
 
 void lcd_display_both_lines(const char* display1, const char* display2) {

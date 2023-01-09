@@ -1,14 +1,6 @@
 #ifndef _TEMPERATURE_H
 #define _TEMPERATURE_H 1
 
-#ifdef DS1820
-#include "lookup-temp.h"
-#define DECIMAL_PRECISION 1
-#else
-#include "lookup-temp-b.h"
-#define DECIMAL_PRECISION 4
-#endif
-
 #include "avrlib.h"
 #include <stdio.h>
 
@@ -16,9 +8,9 @@
 
 reg_t one_wire_reset();
 bit_t one_wire_receive_bit();
-void one_wire_transmit_bit();
+void one_wire_transmit_bit(char bit);
 char one_wire_receive_byte();
-void one_wire_transmit_byte();
+void one_wire_transmit_byte(bit_t bit);
 int get_temperature(char* str);
 
 #endif

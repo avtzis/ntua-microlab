@@ -1,4 +1,5 @@
 #include "temperature.h"
+#include "lcd.h"
 
 reg_t one_wire_reset() {
     set_bit(&DDRD, PD4);
@@ -90,8 +91,25 @@ int get_temperature(char* str){
     ls_byte = one_wire_receive_byte();
     ms_byte = one_wire_receive_byte();
     index = ((short)ms_byte << 8) | ls_byte;
+    
+    int temp;
+    unsigned int decimals;
+    if(index <= 0x7FF) {
+        temp = index / 16;
+        decimals = ((unsigned int)index*10000) % 16000;
+        if(temp > 125) temp = 125, decimals = 0;
+    } else if(index > 0x7FF && index < 0xFC90) {
+        temp = 0;
+        decimals = 0;
+    } else {
+        index ^= 0xFFFF;
+        ++index;
+        temp = - (index / 16);
+        decimals = ((unsigned int)index*10000) % 16000;
+        if(temp < -55.0) temp = -55, decimals = 0;
+    }
 
-    sprintf(str, "%.*f%cC", DECIMAL_PRECISION, lookup_temp[index], (char)223);
+    sprintf(str, "%+d.%04d%cC", temp, decimals, (char)LCD_DEGREE_CIRCLE);
     
 out:
     return ret;
