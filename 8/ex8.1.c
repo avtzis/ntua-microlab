@@ -3,8 +3,6 @@
 #include "usart.h"
 
 int main() {
-    char transmit[64];
-
     usart_init(103);
     lcd_init();
 

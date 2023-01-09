@@ -152,6 +152,7 @@ uint8_t PCA9555_0_read(PCA9555_REGISTERS reg)
 }
 
 void keypad_init() {
+    twi_init();
     PCA9555_0_write(REG_CONFIGURATION_1, 0xF0);
 }
 
