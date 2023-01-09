@@ -94,9 +94,10 @@ int get_temperature(char* str){
     
     int temp;
     unsigned int decimals;
+    char sign = '+';
     if(index <= 0x7FF) {
         temp = index / 16;
-        decimals = ((unsigned int)index*10000) % 16000;
+        decimals = (((unsigned int)index*10000) / 16) % 10000;
         if(temp > 125) temp = 125, decimals = 0;
     } else if(index > 0x7FF && index < 0xFC90) {
         temp = 0;
@@ -104,12 +105,13 @@ int get_temperature(char* str){
     } else {
         index ^= 0xFFFF;
         ++index;
-        temp = - (index / 16);
-        decimals = ((unsigned int)index*10000) % 16000;
-        if(temp < -55.0) temp = -55, decimals = 0;
+        temp = index / 16;
+        decimals = (((unsigned int)index*10000) / 16) % 10000;
+        if(temp > 55) temp = 55, decimals = 0;
+        sign = '-';
     }
 
-    sprintf(str, "%+d.%04d%cC", temp, decimals, (char)LCD_DEGREE_CIRCLE);
+    sprintf(str, "%c%d.%04d%cC", sign, temp, decimals, (char)LCD_DEGREE_CIRCLE);
     
 out:
     return ret;
