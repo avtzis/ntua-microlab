@@ -1,4 +1,5 @@
 #include "usart.h"
+#include <stdio.h>
 
 void usart_init(unsigned int ubrr) {
     UCSR0A = 0;
@@ -24,6 +25,29 @@ void usart_transmit_str(const char* str, int len) {
 }
 
 void usart_receive_str(char* str, int len) {
-    for(int i=0; i<len; ++i)
+    for(int i=0; i<len; ++i) {
         str[i] = usart_receive();
+        if(str[i] = '\n') return;
+    }
+}
+
+int usart_command(const char* str, int n) {
+    int len = strlen(str);
+    char receive[16];
+
+    usart_transmit_str(str);
+    usart_receive_str(receive, 16);
+
+    if(n) {
+        char turn[2];
+        sprintf(turn, "%d.", n);
+        lcd_clear_and_display(turn);
+        if(strcmp(receive, "\"Success\"")) {
+            lcd_display("Success");
+            return 0;
+        } else {
+            lcd_display("Fail");
+            return 1;
+        }
+    }
 }

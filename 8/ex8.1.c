@@ -3,24 +3,13 @@
 #include "usart.h"
 
 int main() {
-    char transmit[64], receive[16];
+    char transmit[64];
 
     usart_init(103);
     lcd_init();
 
-    usart_transmit_str("ESP:restart\n", 13);
-
-
-    usart_transmit_str("ESP:connect\n", 13)
-    usart_receive_str(receive, 16);
-    lcd_clear_and_display("1.");
-    lcd_display(receive);
-
+    usart_command("ESP:restart\n", 0);
+    usart_command("ESP:connect\n", 1);
     _delay_ms(1000);
-
-    usart_transmit_str("ESP:url:\"http://192.168.1.250:5000/data\"", 41);
-    usart_receive_str(receive, 16);
-    lcd_clear_and_display("2.");
-    lcd_display(receive);
-
+    usart_command("ESP:url:\"http://192.168.1.250:5000/data\"", 2);
 }
