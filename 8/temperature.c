@@ -66,7 +66,7 @@ void one_wire_transmit_byte(bit_t bit) {
 }
 
 
-int get_temperature(char* str){
+int get_temperature(char* str) {
     int ret = 0;
     reg_t ls_byte, ms_byte;
     unsigned short index;

@@ -18,7 +18,7 @@ int main() {
     int nurse_call = 0;
     for(int n = 0; ; ++n) {
         char temp[16], prss[16], key, status[16];
-        char display1[16], payload[128];
+        char payload[256];
 
         if(get_temperature(temp)) {
             temp = "error";

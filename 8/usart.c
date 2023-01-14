@@ -1,5 +1,6 @@
 #include "usart.h"
 #include <stdio.h>
+#include "lcd.h"
 
 void usart_init(unsigned int ubrr) {
     UCSR0A = 0;
@@ -28,7 +29,7 @@ void usart_transmit_str(const char* str, int len) {
 void usart_receive_str(char* str, int len) {
     for(int i=0; i<len; ++i) {
         str[i] = usart_receive();
-        if(str[i] = '\n') return;
+        if(str[i] == '\n') return;
     }
 }
 
@@ -36,7 +37,7 @@ int usart_command(const char* str, int n) {
     int len = strlen(str);
     char receive[16];
 
-    usart_transmit_str(str);
+    usart_transmit_str(str, len);
     usart_receive_str(receive, 16);
 
     if(n) {
@@ -57,4 +58,5 @@ int usart_command(const char* str, int n) {
             return 1;
         }
     }
+    return 0;
 }
