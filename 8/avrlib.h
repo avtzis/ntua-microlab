@@ -15,5 +15,6 @@ typedef volatile unsigned char port_t;
 
 void clear_bit(port_t* port, int bit);
 void set_bit(port_t* port, int bit);
+unsigned pow(unsigned base, unsigned power)
 
 #endif

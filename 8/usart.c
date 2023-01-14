@@ -22,6 +22,7 @@ reg_t usart_receive() {
 void usart_transmit_str(const char* str, int len) {
     for(int i=0; i<len; ++i) 
         usart_transmit(str[i]);
+    usart_transmit('\n');
 }
 
 void usart_receive_str(char* str, int len) {
@@ -40,13 +41,19 @@ int usart_command(const char* str, int n) {
 
     if(n) {
         char turn[2];
+        lcd_init();
+
         sprintf(turn, "%d.", n);
         lcd_clear_and_display(turn);
-        if(strcmp(receive, "\"Success\"")) {
+
+        if(!strcmp(receive, "\"Success\"")) {
             lcd_display("Success");
             return 0;
-        } else {
+        } else if(!strcmp(receive, "\"Fail\"")) {
             lcd_display("Fail");
+            return -1;
+        } else {
+            lcd_display(receive);
             return 1;
         }
     }

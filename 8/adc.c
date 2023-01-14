@@ -22,6 +22,7 @@ unsigned get_pot_natural() {
 
 int get_pot_str(char* str) {
     unsigned vin = get_pot_natural();
+    vin *= 4; //Normalized for human BP
     sprintf(str, "%d.%02d", vin/100, vin%100);
     return strlen(str);
 }

@@ -94,10 +94,12 @@ int get_temperature(char* str){
     
     int temp;
     unsigned int decimals;
+    int decimal_accuracy = 1;
+    unsigned daf = pow(10, decimal_accuracy);
     char sign = '+';
     if(index <= 0x7FF) {
         temp = index / 16;
-        decimals = (((unsigned int)index*10000) / 16) % 10000;
+        decimals = (((unsigned int)index*daf) / 16) % daf;
         if(temp > 125) temp = 125, decimals = 0;
     } else if(index > 0x7FF && index < 0xFC90) {
         temp = 0;
@@ -106,12 +108,13 @@ int get_temperature(char* str){
         index ^= 0xFFFF;
         ++index;
         temp = index / 16;
-        decimals = (((unsigned int)index*10000) / 16) % 10000;
+        decimals = (((unsigned int)index*daf) / 16) % daf;
         if(temp > 55) temp = 55, decimals = 0;
         sign = '-';
     }
 
-    sprintf(str, "%c%d.%04d%cC", sign, temp, decimals, (char)LCD_DEGREE_CIRCLE);
+    temp += 15; //Normalized for human temperature
+    sprintf(str, /* "%c" */"%d.%0*d"/* "%cC" */, /* sign, */ temp, decimal_accuracy, decimals/* , (char)LCD_DEGREE_CIRCLE */);
     
 out:
     return ret;
