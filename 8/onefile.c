@@ -2,6 +2,8 @@
 
 #include <avr/io.h>
 #include <util/delay.h>
+#include <string.h>
+#include <stdio.h>
 
 typedef unsigned char reg_t;
 typedef unsigned char bit_t;
@@ -615,7 +617,7 @@ int get_temperature(char* str) {
     }
 
     temp += 15; //Normalized for human temperature
-    sprintf(str, /* "%c" */"%d.%01d"/* "%cC" */, /* sign, */ temp, decimals/* , (char)LCD_DEGREE_CIRCLE */);
+    sprintf(str, /* "%c" */"%d.%01d\0"/* "%cC" */, /* sign, */ temp, decimals/* , (char)LCD_DEGREE_CIRCLE */);
     
 out:
     lcd_init();
@@ -684,33 +686,38 @@ int usart_command(const char* str, int n) {
 }
 
 int main() {
-    //usart_init(103);
-    //keypad_init();
-    adc_init();
     lcd_init();
-
-    /*usart_command("ESP:restart", 0);
+    keypad_init();
+    usart_init(103);
+    
+    usart_command("ESP:restart", 0);
     usart_command("ESP:connect", 1); //in loop?
     _delay_ms(1000);
     usart_command("ESP:url:\"http://192.168.1.250:5000/data\"", 2);
-    _delay_ms(1000);*/
-
+    _delay_ms(1000);
+    
     int nurse_call = 0;
-    for(/*int n = 0; ; ++n*/;;) {
-        char temp[16], prss[16], key, status[16];
-        //char payload[256];
-        char display1[16], display2[16];
-
-        if(get_temperature(temp)) {
-            sprintf(temp, "error");
+    while(1) {
+        char prss[] = "11.0\0";
+        char temp[] = "36.6\0";
+        char display[16] = "T:", display1[] = " P:";
+        char status[16];
+        char key = 0;
+        char payload[256];
+        
+        
+        //get_pot_str(prss);
+        strcat(display1, prss);
+        
+        //get_temperature(temp);
+        strcat(display, temp);
+        
+        strcat(display, display1);
+        //lcd_clear_and_display(display);
+        
+        if(keypad_to_ascii()) {
+            key = keypad_to_ascii();
         }
-
-        if(!get_pot_str(prss)) {
-            sprintf(prss, "error");
-        }
-            
-            
-        key = 0;//keypad_to_ascii();
 
         if(key == '9') {
             nurse_call = 1;
@@ -727,34 +734,24 @@ int main() {
         int temp_n;
         sscanf(temp, "%d", &temp_n);
         if(temp_n < 34 || temp_n > 37) sprintf(status, "CHECK TEMP");
-        
-        lcd_init();
-        sprintf(display1, "T:%s ", temp);
-        sprintf(display2, "P:%s", prss);
-        //lcd_clear_and_display(display2);
-        //lcd_display_both_lines(display1, display2);
-        char display[16];
-        strcat(display, display1);
-        strcat(display, display2);
-        lcd_clear_and_display(display);
-        _delay_ms(1000);
-        lcd_clear_and_display("123");
-        _delay_ms(1000);
 
         int prss_n;
         sscanf(prss, "%d", &prss_n);
-        lcd_clear_and_display("345");
-        _delay_ms(1000);
         if(prss_n < 4 || prss_n > 12) sprintf(status, "CHECK PRESSURE");
         
+        sprintf(payload, "ESP:payload:"
+                        "["
+                        "{\"name\": \"temperature\",\"value\": \"%s\"},"
+                        "{\"name\": \"pressure\",\"value\": \"%s\"},"
+                        "{\"name\": \"team\",\"value\": \"%d\"},"
+                        "{\"name\": \"status\",\"value\": \"%s\"}"
+                        "]",
+               temp, prss, 19, status
+              );
+       usart_command(payload, 3);
+       usart_command("ESP:transmit", 4);
         
-
-        //sprintf(display1, "T: %s P: %s", temp, prss);
-        //lcd_init();
-        //lcd_display_both_lines(display1, status);
-        //lcd_display_both_lines("1", "2");
-        //lcd_clear_and_display("qwerty");
-
-        //_delay_ms(1000);
+        //lcd_display_line_2(status);
+        _delay_ms(1000);
     }
 }
