@@ -690,14 +690,15 @@ int main() {
     keypad_init();
     usart_init(103);
     
-    usart_command("ESP:restart", 0);
-    usart_command("ESP:connect", 1); //in loop?
-    _delay_ms(1000);
-    usart_command("ESP:url:\"http://192.168.1.250:5000/data\"", 2);
-    _delay_ms(1000);
-    
     int nurse_call = 0;
     while(1) {
+        usart_command("ESP:restart", 0);
+        _delay_ms(1000);
+        usart_command("ESP:connect", 1); //in loop?
+        _delay_ms(1000);
+        usart_command("ESP:url:\"http://192.168.1.250:5000/data\"", 2);
+        _delay_ms(1000);
+
         char prss[] = "11.0\0";
         char temp[] = "36.6\0";
         char display[16] = "T:", display1[] = " P:";
@@ -741,14 +742,16 @@ int main() {
         
         sprintf(payload, "ESP:payload:"
                         "["
-                        "{\"name\": \"temperature\",\"value\": \"%s\"},"
-                        "{\"name\": \"pressure\",\"value\": \"%s\"},"
+                        "{\"name\": \"temperature\",\"value\": \"%d\"},"
+                        "{\"name\": \"pressure\",\"value\": \"%d\"},"
                         "{\"name\": \"team\",\"value\": \"%d\"},"
-                        "{\"name\": \"status\",\"value\": \"%s\"}"
-                        "]",
-               temp, prss, 19, status
+                        "{\"name\": \"status\",\"value\": \"",
+               temp_n, prss_n, 19
               );
+        strcat(payload, status);
+        strcat(payload, "\"}]");
        usart_command(payload, 3);
+       _delay_ms(1000);
        usart_command("ESP:transmit", 4);
         
         //lcd_display_line_2(status);
